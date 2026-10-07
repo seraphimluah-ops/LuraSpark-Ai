@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '25mb' }));
 app.use('/api', apiRouter);
 
-// Serve static frontend in production
+// Serve static frontend in production or dev if dist exists
 const distPath = path.resolve(__dirname, 'dist');
 const indexPath = path.join(distPath, 'index.html');
 
@@ -29,11 +29,12 @@ app.get('*', (req, res) => {
   if (fs.existsSync(indexPath)) {
     res.sendFile(indexPath);
   } else {
+    // If dist doesn't exist yet, serve a basic fallback that redirects to root or renders placeholder
     res.status(200).send(`
       <!DOCTYPE html>
       <html>
         <head>
-          <title>LuraSpark AI - Building</title>
+          <title>LuraSpark AI - Initializing</title>
           <style>
             body { background: #131314; color: #E3E3E3; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
             .card { text-align: center; padding: 2rem; background: #1e1f20; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.1); }
@@ -41,8 +42,8 @@ app.get('*', (req, res) => {
         </head>
         <body>
           <div class="card">
-            <h2>LuraSpark AI is compiling...</h2>
-            <p>Please refresh the page in a few seconds.</p>
+            <h2>LuraSpark AI is starting up...</h2>
+            <p>Please refresh the page in 5 seconds.</p>
           </div>
         </body>
       </html>
@@ -50,8 +51,9 @@ app.get('*', (req, res) => {
   }
 });
 
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-  app.listen(PORT, () => {
+// Always listen on PORT unless running as Vercel serverless function
+if (!process.env.VERCEL) {
+  app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`LuraSpark AI server running on port ${PORT}`);
   });
 }
